@@ -1,22 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   server.c                                           :+:      :+:    :+:   */
+/*   ft_tolower.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: anpollan <anpollan@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/07 12:00:09 by anpollan          #+#    #+#             */
-/*   Updated: 2025/07/07 12:00:37 by anpollan         ###   ########.fr       */
+/*   Created: 2025/04/22 15:37:30 by anpollan          #+#    #+#             */
+/*   Updated: 2025/04/22 15:37:31 by anpollan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minitalk.h"
-
-int	main(void)
+int	ft_tolower(int c)
 {
-	int	pid;
-
-	pid = getpid();
-	printf("%d\n", pid);
-	return (0);
+	if (c >= 'A' && c <= 'Z')
+		c += 32;
+	return (c);
 }

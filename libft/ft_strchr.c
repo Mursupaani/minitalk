@@ -1,25 +1,30 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   client.c                                           :+:      :+:    :+:   */
+/*   ft_strchr.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: anpollan <anpollan@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/07/07 12:32:21 by anpollan          #+#    #+#             */
-/*   Updated: 2025/07/07 12:35:26 by anpollan         ###   ########.fr       */
+/*   Created: 2025/04/22 15:35:56 by anpollan          #+#    #+#             */
+/*   Updated: 2025/04/22 15:35:57 by anpollan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minitalk.h"
+#include "libft.h"
 
-int	main(int argc, char *argv[])
+char	*ft_strchr(const char *s, int c)
 {
-	if (argc != 3)
-		return (1);
-	while (argc-- > 0)
+	int	i;
+
+	i = 0;
+	while ((unsigned char)s[i])
 	{
-		printf("%s\n", *argv);
-		argv++;
+		if ((unsigned char)s[i] == (unsigned char)c)
+			return ((char *)&s[i]);
+		i++;
 	}
-	return (0);
+	if ((unsigned char)s[i] == (unsigned char)c)
+		return ((char *)&s[i]);
+	else
+		return (NULL);
 }

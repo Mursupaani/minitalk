@@ -13,23 +13,22 @@
 SERVER		= server
 CLIENT		= client
 LIBFT		= ./libft/libft.a
-SERVER_SRCS	= server.c
-CLIENT_SRCS = client.c
+SRCS_DIR	= ./srcs/
+INCL_DIR	= ./incl/
+SERVER_SRCS	= ./srcs/server.c
+CLIENT_SRCS = ./srcs/client.c
 SERVER_OBJS	= $(SERVER_SRCS:%.c=%.o)
 CLIENT_OBJS	= $(CLIENT_SRCS:%.c=%.o)
-HEADER		= minitalk.h
+HEADER		= ./incl/minitalk.h
 C_FLAGS		= -Wall -Wextra -Werror -g
 
 all: $(SERVER) $(CLIENT)
 
-# $(SERVER): $(OBJS) $(LIBFT)
-# 	cc $(C_FLAGS) $(OBJS) $(LIBFT) -o $(NAME)
+$(SERVER): $(SERVER_OBJS) $(LIBFT)
+	cc $(C_FLAGS) $(SERVER_OBJS) $(LIBFT) -o $(SERVER)
 
-$(SERVER): $(SERVER_OBJS)
-	cc $(C_FLAGS) $(SERVER_OBJS) -o $(SERVER)
-
-$(CLIENT): $(CLIENT_OBJS)
-	cc $(C_FLAGS) $(CLIENT_OBJS) -o $(CLIENT)
+$(CLIENT): $(CLIENT_OBJS) $(LIBFT)
+	cc $(C_FLAGS) $(CLIENT_OBJS) $(LIBFT) -o $(CLIENT)
 
 $(LIBFT):
 	$(MAKE) -C libft
@@ -37,15 +36,13 @@ $(LIBFT):
 %.o: %.c $(HEADER)
 	cc $(C_FLAGS) -c $< -o $@
 
-# clean: 
-# 	rm -rf $(OBJS)
-# 	$(MAKE) -C libft clean
-
 clean: 
-	rm -rf $(OBJS)
+	rm -rf $(CLIENT_OBJS) $(SERVER_OBJS)
+	$(MAKE) -C libft clean
 
 fclean: clean
 	rm -rf $(SERVER) $(CLIENT) compile_commands.json
+	$(MAKE) -C libft fclean
 
 re: fclean all
 
