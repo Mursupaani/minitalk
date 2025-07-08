@@ -13,13 +13,19 @@
 #include "../incl/minitalk.h"
 
 void	send_char_as_bits(unsigned char c, int server_pid);
+static	s_sigaction	*initialize_sigaction(void);
+void	signal_handler(int signal, siginfo_t *sender_info, void *context);
+
+int	sender;
 
 int	main(int argc, char *argv[])
 {
 	int	server_pid;
+	struct sigaction	*sa;
 
 	if (argc != 3)
 		return (1);
+	sa = initialize_sigaction();
 	server_pid = ft_atoi(argv[1]);
 	ft_printf("Server pid: %d\n", server_pid);
 	ft_printf("Message: %s\n", argv[2]);
@@ -27,8 +33,10 @@ int	main(int argc, char *argv[])
 	{
 		send_char_as_bits(*argv[2], server_pid);
 		argv[2]++;
+		pause();
 	}
 	send_char_as_bits(*argv[2], server_pid);
+	free(sa);
 	return (0);
 }
 
@@ -47,6 +55,29 @@ void	send_char_as_bits(unsigned char c, int server_pid)
 		else
 			kill(server_pid, SIGUSR2);
 		c = c << 1;
-		usleep(1);
+		usleep(10);
 	}
+}
+
+static s_sigaction	*initialize_sigaction(void)
+{
+	s_sigaction	*sa;
+
+	sa = (s_sigaction *)ft_calloc(1, sizeof(s_sigaction));
+	if (!sa)
+		return (NULL);
+	// sa->sa_handler = &handle_sigusrs;
+	sa->sa_sigaction = &signal_handler;
+	sigaction(SIGUSR1, sa, NULL);
+	sigaction(SIGUSR2, sa, NULL);
+	// sigaddset(&(sa->sa_mask), SIGINT);
+
+	return (sa);
+}
+
+void	signal_handler(int signal, siginfo_t *sender_info, void *context)
+{
+	(void)context;
+	(void)sender_info;
+	(void)signal;
 }

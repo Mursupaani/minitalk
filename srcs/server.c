@@ -12,30 +12,23 @@
 
 #include "../incl/minitalk.h"
 
-static void				print_server_pid(void);
-static struct sigaction	*initialize_sigaction(void);
-void					signal_handler(int signal, siginfo_t *info, void *null);
-void					handle_sigusrs(int signal);
-char					parse_input_bits(int signal);
-char					read_client_signals(struct sigaction *sa);
+static void			print_server_pid(void);
+static s_sigaction	*initialize_sigaction(void);
+void				signal_handler(int signal, siginfo_t *info, void *context);
+char				parse_input_bits(int signal, pid_t sender);
 
-unsigned char	c;
+char	c;
 
 int	main(void)
 {
-	struct sigaction	*sa;
-	siginfo_t			sender;
+	s_sigaction	*sa;
 
 	sa = initialize_sigaction();
 	if (!sa)
 		return (1);
 	print_server_pid();
 	while (1)
-	{
 		pause();
-		read_client_signals(sa);
-
-	}
 	free(sa);
 	return (0);
 }
@@ -48,11 +41,11 @@ static void	print_server_pid(void)
 	ft_printf("%d\n", pid);
 }
 
-static struct sigaction	*initialize_sigaction(void)
+static	s_sigaction	*initialize_sigaction(void)
 {
-	struct sigaction	*sa;
+	s_sigaction	*sa;
 
-	sa = (struct sigaction *)ft_calloc(1, sizeof(struct sigaction));
+	sa = (s_sigaction *)ft_calloc(1, sizeof(s_sigaction));
 	if (!sa)
 		return (NULL);
 	// sa->sa_handler = &handle_sigusrs;
@@ -64,14 +57,9 @@ static struct sigaction	*initialize_sigaction(void)
 	return (sa);
 }
 
-void	handle_sigusrs(int signal)
+char	parse_input_bits(int signal, pid_t sender)
 {
-	parse_input_bits(signal);
-}
-
-char	parse_input_bits(int signal)
-{
-	static int				counter;
+	static int	counter;
 
 	if (counter >= 8)
 		c = 0;
@@ -91,11 +79,24 @@ char	parse_input_bits(int signal)
 	else
 	{
 		counter = 0;
+		write(1, &c, 1);
+		usleep(200);
+		kill(sender, SIGUSR1);
 		return (c);
 	}
 }
 
-void	signal_handler(int signal, siginfo_t *info, void *null)
+void	signal_handler(int signal, siginfo_t *info, void *context)
 {
-	(void)null;
+	pid_t	sender;
+	// char	current_signal;
+
+	(void)context;
+	// if (signal == SIGUSR1)
+	// 	current_signal = '1';
+	// else if (signal == SIGUSR2)
+	// 	current_signal = '0';
+	// write(1, &current_signal, 1);
+	sender = info->si_pid;
+	parse_input_bits(signal, sender);
 }

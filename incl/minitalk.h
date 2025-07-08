@@ -20,4 +20,6 @@
 # include <stdio.h>
 // WARN: Remove this
 
+typedef struct sigaction s_sigaction;
+
 #endif
