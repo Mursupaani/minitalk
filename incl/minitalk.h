@@ -15,6 +15,7 @@
 # include <stdlib.h>
 # include <unistd.h>
 # include <signal.h>
+# include "../libft/libft.h"
 // WARN: Remove this
 # include <stdio.h>
 // WARN: Remove this
