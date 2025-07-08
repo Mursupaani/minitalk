@@ -21,14 +21,17 @@ int	sender;
 int	main(int argc, char *argv[])
 {
 	int	server_pid;
+	int	strlen;
 	struct sigaction	*sa;
 
 	if (argc != 3)
 		return (1);
 	sa = initialize_sigaction();
 	server_pid = ft_atoi(argv[1]);
-	ft_printf("Server pid: %d\n", server_pid);
-	ft_printf("Message: %s\n", argv[2]);
+	strlen = ft_strlen(argv[2]);
+	if (strlen == 0)
+		//free memory
+		return (1);
 	while (*argv[2])
 	{
 		send_char_as_bits(*argv[2], server_pid);
