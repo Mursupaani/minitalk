@@ -16,6 +16,8 @@ static s_sigaction	initialize_sigaction(void);
 static void			send_message(const char *message, pid_t pid);
 static void			signal_handler(int signal, siginfo_t *info, void *context);
 
+static volatile sig_atomic_t g_signal_received;
+
 int	main(int argc, char *argv[])
 {
 	pid_t		server_pid;
@@ -38,6 +40,7 @@ static s_sigaction	initialize_sigaction(void)
 
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_SIGINFO;
+	// sa.sa_flags = SA_RESTART;
 
 	sa.sa_sigaction = &signal_handler;
 	sigaction(SIGUSR1, &sa, NULL);
@@ -72,6 +75,32 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 {
 	(void)context;
 	(void)info;
+	if (signal == SIGUSR1)
+		g_signal_received = 1;
 	if (signal == SIGUSR2)
 		exit(EXIT_FAILURE);
 }
+
+void	send_char_as_bits(unsigned char c, int pid)
+{
+	unsigned char	current_bit;
+	int				i;
+
+	current_bit = 0;
+	i = 8;
+	while (i--)
+	{
+		g_signal_received = 0;
+		current_bit = c & 0b10000000;
+		if (current_bit)
+			kill(pid, SIGUSR1);
+		else
+			kill(pid, SIGUSR2);
+		while (!g_signal_received)
+			usleep(50);
+			// pause();
+		usleep(50);
+		c = c << 1;
+	}
+}
+
