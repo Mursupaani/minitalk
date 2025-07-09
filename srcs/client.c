@@ -70,7 +70,7 @@ void	send_char_as_bits(unsigned char c, int server_pid)
 			kill(server_pid, SIGUSR2);
 		c = c << 1;
 		pause();
-		usleep(10);
+		// usleep(50);
 	}
 }
 
