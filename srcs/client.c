@@ -26,7 +26,7 @@ int	main(int argc, char *argv[])
 	server_pid = ft_atoi(argv[1]);
 	sa = initialize_sigaction();
 	send_message(argv[2], server_pid);
-	//FIXME: Handle this better
+	//FIXME:Handle this better
 	(void)sa;
 	return (0);
 }
