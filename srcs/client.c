@@ -41,7 +41,7 @@ int	main(int argc, char *argv[])
 	i = 0;
 	while (strlen_str[i])
 		send_char_as_bits(strlen_str[i++], server_pid);
-	send_char_as_bits('!', server_pid);
+	send_char_as_bits('\0', server_pid);
 	free(strlen_str);
 	while (*argv[2])
 	{
@@ -70,7 +70,7 @@ void	send_char_as_bits(unsigned char c, int server_pid)
 			kill(server_pid, SIGUSR2);
 		c = c << 1;
 		pause();
-		usleep(1000);
+		usleep(10);
 	}
 }
 

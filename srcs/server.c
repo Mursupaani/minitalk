@@ -15,9 +15,9 @@
 static void			print_server_pid(void);
 static s_sigaction	*initialize_sigaction(void);
 void				signal_handler(int signal, siginfo_t *info, void *context);
-unsigned char		*parse_input_bits(int signal, pid_t sender);
+unsigned char		*parse_input_bits(int signal, pid_t client);
 
-// char	c;
+static pid_t	g_current_client = -1;
 
 int	main(void)
 {
@@ -57,12 +57,12 @@ static	s_sigaction	*initialize_sigaction(void)
 	return (sa);
 }
 
-unsigned char	*parse_input_bits(int signal, pid_t sender)
+unsigned char	*parse_input_bits(int signal, pid_t client)
 {
 	static int				counter;
 	static unsigned char	c[1];
 
-	if (counter >= 8)
+	if (counter == 0)
 		*c = 0;
 	if (signal == SIGUSR1)
 	{
@@ -77,7 +77,7 @@ unsigned char	*parse_input_bits(int signal, pid_t sender)
 	}
 	if (counter < 8)
 	{
-		kill(sender, SIGUSR1);
+		kill(client, SIGUSR1);
 		return (NULL);
 	}
 	else
@@ -85,14 +85,14 @@ unsigned char	*parse_input_bits(int signal, pid_t sender)
 		counter = 0;
 		// write(1, &c, 1);
 		// usleep(200);
-		kill(sender, SIGUSR1);
+		kill(client, SIGUSR1);
 		return (c);
 	}
 }
 
 void	signal_handler(int signal, siginfo_t *info, void *context)
 {
-	pid_t			sender;
+	pid_t			client;
 	static char		*strlen_str;
 	static int		i;
 	static bool		writing_string;
@@ -100,7 +100,14 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 	unsigned char	*c;
 	int				strlen;
 
-	sender = info->si_pid;
+	client = info->si_pid;
+	if (g_current_client == -1)
+		g_current_client = client;
+	if (client != g_current_client)
+	{
+		kill(client, SIGUSR2);
+		return ;
+	}
 	if (!writing_string)
 	{
 		if (!strlen_str)
@@ -108,20 +115,20 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 		if (!strlen_str)
 			// FIXME: What else needs to be done?
 			return ;
-		c = parse_input_bits(signal, sender);
+		c = parse_input_bits(signal, client);
 		if (!c)
 			return ;
-		write(1, c, 1);
 		strlen_str[i] = *c;
-		if (strlen_str[i++] == '!')
+		if (strlen_str[i++] == '\0')
 		{
 			writing_string = true;
 			i = 0;
 		}
+		// write(1, c, 1);
 	}
-	if (writing_string)
+	else if (writing_string)
 	{
-		if (strlen_str)
+		if (!message)
 		{
 			strlen = ft_atoi(strlen_str);
 			free(strlen_str);
@@ -130,12 +137,12 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 			if (!message)
 				// FIXME: What else needs to be done?
 				return ;
-		ft_printf("strlen: %d\n", strlen);
+		// ft_printf("strlen: %d\n", strlen);
 		}
-		c = parse_input_bits(signal, sender);
+		c = parse_input_bits(signal, client);
 		if (!c)
 			return ;
-		ft_printf("%d\n", *c);
+		// ft_printf("c: %d\n", *c);
 		message[i] = *c;
 		if (message[i++] == '\0')
 		{
@@ -144,6 +151,7 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 			message = NULL;
 			writing_string = false;
 			i = 0;
+			g_current_client = -1;
 		}
 	}
 
