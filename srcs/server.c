@@ -21,7 +21,6 @@ unsigned char	*parse_input_bits(int signal);
 void			error_exit(pid_t client);
 void			print_message_and_initialize(char **message, bool *got_length, int *i);
 
-static pid_t	g_current_client = -1;
 
 int	main(void)
 {
@@ -91,12 +90,13 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 	pid_t			client;
 	static char		*msg_len;
 	static bool		got_length;
+	static pid_t	current_client;
 
 	(void)context;
 	client = info->si_pid;
-	if (g_current_client == -1)
-		g_current_client = client;
-	if (client != g_current_client)
+	if (current_client == 0)
+		current_client = client;
+	if (client != current_client)
 	{
 		kill(client, SIGUSR2);
 		return ;
@@ -104,7 +104,11 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 	if (!got_length)
 		msg_len = get_string_length(signal, client, &got_length);
 	else if (got_length)
+	{
 		receive_message(signal, client, &msg_len, &got_length);
+		if (!got_length)
+			current_client = 0;
+	}
 	kill(client, SIGUSR1);
 }
 
@@ -171,6 +175,5 @@ void	print_message_and_initialize(char **message, bool *got_length, int *i)
 	free(*message);
 	*message = NULL;
 	*i = 0;
-	g_current_client = -1;
 	*got_length = false;
 }
