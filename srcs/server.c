@@ -15,9 +15,9 @@
 static void			print_server_pid(void);
 static s_sigaction	*initialize_sigaction(void);
 void				signal_handler(int signal, siginfo_t *info, void *context);
-char				parse_input_bits(int signal, pid_t sender);
+unsigned char		*parse_input_bits(int signal, pid_t sender);
 
-char	c;
+// char	c;
 
 int	main(void)
 {
@@ -57,30 +57,34 @@ static	s_sigaction	*initialize_sigaction(void)
 	return (sa);
 }
 
-char	parse_input_bits(int signal, pid_t sender)
+unsigned char	*parse_input_bits(int signal, pid_t sender)
 {
-	static int	counter;
+	static int				counter;
+	static unsigned char	c[1];
 
 	if (counter >= 8)
-		c = 0;
+		*c = 0;
 	if (signal == SIGUSR1)
 	{
-		c = c << 1;
-		c += 1;
+		*c = *c << 1;
+		*c += 1;
 		counter++;
 	}
 	else if (signal == SIGUSR2)
 	{
-		c = c << 1;
+		*c = *c << 1;
 		counter++;
 	}
 	if (counter < 8)
-		return (0);
+	{
+		kill(sender, SIGUSR1);
+		return (NULL);
+	}
 	else
 	{
 		counter = 0;
-		write(1, &c, 1);
-		usleep(200);
+		// write(1, &c, 1);
+		// usleep(200);
 		kill(sender, SIGUSR1);
 		return (c);
 	}
@@ -88,15 +92,66 @@ char	parse_input_bits(int signal, pid_t sender)
 
 void	signal_handler(int signal, siginfo_t *info, void *context)
 {
-	pid_t	sender;
-	// char	current_signal;
+	pid_t			sender;
+	static char		*strlen_str;
+	static int		i;
+	static bool		writing_string;
+	static char		*message;
+	unsigned char	*c;
+	int				strlen;
+
+	sender = info->si_pid;
+	if (!writing_string)
+	{
+		if (!strlen_str)
+			strlen_str = (char *)ft_calloc(1, 11);
+		if (!strlen_str)
+			// FIXME: What else needs to be done?
+			return ;
+		c = parse_input_bits(signal, sender);
+		if (!c)
+			return ;
+		write(1, c, 1);
+		strlen_str[i] = *c;
+		if (strlen_str[i++] == '!')
+		{
+			writing_string = true;
+			i = 0;
+		}
+	}
+	if (writing_string)
+	{
+		if (strlen_str)
+		{
+			strlen = ft_atoi(strlen_str);
+			free(strlen_str);
+			strlen_str = NULL;
+			message = (char *)malloc(strlen + 1);
+			if (!message)
+				// FIXME: What else needs to be done?
+				return ;
+		ft_printf("strlen: %d\n", strlen);
+		}
+		c = parse_input_bits(signal, sender);
+		if (!c)
+			return ;
+		ft_printf("%d\n", *c);
+		message[i] = *c;
+		if (message[i++] == '\0')
+		{
+			ft_printf("%s", message);
+			free(message);
+			message = NULL;
+			writing_string = false;
+			i = 0;
+		}
+	}
 
 	(void)context;
+	// char	current_signal;
 	// if (signal == SIGUSR1)
 	// 	current_signal = '1';
 	// else if (signal == SIGUSR2)
 	// 	current_signal = '0';
 	// write(1, &current_signal, 1);
-	sender = info->si_pid;
-	parse_input_bits(signal, sender);
 }
