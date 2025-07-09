@@ -47,6 +47,9 @@ s_sigaction	initialize_sigaction(void)
 {
 	s_sigaction	sa;
 
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_SIGINFO;
+
 	sa.sa_sigaction = &signal_handler;
 	sigaction(SIGUSR1, &sa, NULL);
 	sigaction(SIGUSR2, &sa, NULL);
@@ -146,7 +149,7 @@ void	receive_message(int signal, pid_t client, char **msg_len, bool *got_length)
 		message = (char *)malloc(msg_len_int + 1);
 		if (!message)
 			error_exit(client);
-		ft_printf("%d\n", msg_len_int);
+		// ft_printf("%d\n", msg_len_int);
 	}
 	c = parse_input_bits(signal);
 	if (!c)
