@@ -13,7 +13,9 @@
 #include "../incl/minitalk.h"
 
 static void			print_server_pid(void);
-static s_sigaction	*initialize_sigaction(void);
+static s_sigaction	initialize_sigaction(void);
+char				*get_string_length(int signal, pid_t client, bool *receiving_message);
+void	get_message_and_print(int signal, pid_t client, char **strlen_str, bool *receiving_message);
 void				signal_handler(int signal, siginfo_t *info, void *context);
 unsigned char		*parse_input_bits(int signal, pid_t client);
 
@@ -21,15 +23,13 @@ static pid_t	g_current_client = -1;
 
 int	main(void)
 {
-	s_sigaction	*sa;
+	s_sigaction	sa;
 
 	sa = initialize_sigaction();
-	if (!sa)
-		return (1);
 	print_server_pid();
 	while (1)
 		pause();
-	free(sa);
+	(void)sa;
 	return (0);
 }
 
@@ -41,17 +41,13 @@ static void	print_server_pid(void)
 	ft_printf("%d\n", pid);
 }
 
-static	s_sigaction	*initialize_sigaction(void)
+static	s_sigaction	initialize_sigaction(void)
 {
-	s_sigaction	*sa;
+	s_sigaction	sa;
 
-	sa = (s_sigaction *)ft_calloc(1, sizeof(s_sigaction));
-	if (!sa)
-		return (NULL);
-	// sa->sa_handler = &handle_sigusrs;
-	sa->sa_sigaction = &signal_handler;
-	sigaction(SIGUSR1, sa, NULL);
-	sigaction(SIGUSR2, sa, NULL);
+	sa.sa_sigaction = &signal_handler;
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
 	// sigaddset(&(sa->sa_mask), SIGINT);
 
 	return (sa);
@@ -83,8 +79,6 @@ unsigned char	*parse_input_bits(int signal, pid_t client)
 	else
 	{
 		counter = 0;
-		// write(1, &c, 1);
-		// usleep(200);
 		kill(client, SIGUSR1);
 		return (c);
 	}
@@ -93,12 +87,8 @@ unsigned char	*parse_input_bits(int signal, pid_t client)
 void	signal_handler(int signal, siginfo_t *info, void *context)
 {
 	pid_t			client;
-	static char		*strlen_str;
-	static int		i;
-	static bool		writing_string;
-	static char		*message;
-	unsigned char	*c;
-	int				strlen;
+	char			*strlen_str;
+	static bool		receiving_message;
 
 	client = info->si_pid;
 	if (g_current_client == -1)
@@ -108,58 +98,69 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 		kill(client, SIGUSR2);
 		return ;
 	}
-	if (!writing_string)
-	{
-		if (!strlen_str)
-			strlen_str = (char *)ft_calloc(1, 11);
-		if (!strlen_str)
-			// FIXME: What else needs to be done?
-			return ;
-		c = parse_input_bits(signal, client);
-		if (!c)
-			return ;
-		strlen_str[i] = *c;
-		if (strlen_str[i++] == '\0')
-		{
-			writing_string = true;
-			i = 0;
-		}
-		// write(1, c, 1);
-	}
-	else if (writing_string)
-	{
-		if (!message)
-		{
-			strlen = ft_atoi(strlen_str);
-			free(strlen_str);
-			strlen_str = NULL;
-			message = (char *)malloc(strlen + 1);
-			if (!message)
-				// FIXME: What else needs to be done?
-				return ;
-		// ft_printf("strlen: %d\n", strlen);
-		}
-		c = parse_input_bits(signal, client);
-		if (!c)
-			return ;
-		// ft_printf("c: %d\n", *c);
-		message[i] = *c;
-		if (message[i++] == '\0')
-		{
-			ft_printf("%s", message);
-			free(message);
-			message = NULL;
-			writing_string = false;
-			i = 0;
-			g_current_client = -1;
-		}
-	}
+	if (!receiving_message)
+		strlen_str = get_string_length(signal, client, &receiving_message);
+	else if (receiving_message)
+		get_message_and_print(signal, client, &strlen_str, &receiving_message);
 
 	(void)context;
-	// char	current_signal;
-	// if (signal == SIGUSR1)
-	// 	current_signal = '1';
-	// else if (signal == SIGUSR2)
-	// 	current_signal = '0';
-	// write(1, &current_signal, 1);
+}
+
+char	*get_string_length(int signal, pid_t client, bool *receiving_message)
+{
+	static char		*strlen_str;
+	static int		i;
+	unsigned char	*c;
+	char			*ret_str;
+
+	if (!strlen_str)
+		strlen_str = (char *)ft_calloc(1, 11);
+	if (!strlen_str)
+		exit(EXIT_FAILURE);
+	c = parse_input_bits(signal, client);
+	if (!c)
+		return (NULL);
+	strlen_str[i] = *c;
+	if (strlen_str[i++] == '\0')
+	{
+		i = 0;
+		*receiving_message = true;
+		ret_str = strlen_str;
+		strlen_str = NULL;
+		return (ret_str);
+	}
+	return (NULL);
+}
+
+void	get_message_and_print(int signal, pid_t client, char **strlen_str, bool *receiving_message)
+{
+	static char		*message;
+	static int		i;
+	int				strlen;
+	unsigned char	*c;
+
+	if (!message)
+		{
+			strlen = ft_atoi(*strlen_str);
+			free(*strlen_str);
+			*strlen_str = NULL;
+			message = (char *)malloc(strlen + 1);
+			if (!message)
+				//FIXME: notify client
+				exit(EXIT_FAILURE);
+		}
+		c = parse_input_bits(signal, client);
+		if (!c)
+			return ;
+		message[i] = *c;
+		write(1, c, 1);
+		if (message[i++] == '\0')
+		{
+			ft_printf("%s\n", message);
+			free(message);
+			message = NULL;
+			i = 0;
+			g_current_client = -1;
+			*receiving_message = false;
+		}
 }
