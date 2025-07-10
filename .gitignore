@@ -4,3 +4,4 @@ client
 *.json
 .cache/
 libft/
+minitalk-Tester/
