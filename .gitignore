@@ -5,3 +5,4 @@ client
 .cache/
 libft/
 minitalk_tester/
+.DS_Store

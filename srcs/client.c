@@ -24,9 +24,11 @@ int	main(int argc, char *argv[])
 	pid_t		server_pid;
 	s_sigaction	sa;
 
-	if (argc != 3)
+	if (argc != 3 || argv[2][0] == '\0')
 		return (EXIT_FAILURE);
 	server_pid = ft_atoi(argv[1]);
+	if (server_pid == 0)
+		return (EXIT_FAILURE);
 	sa = initialize_sigaction(&signal_handler);
 	send_message(argv[2], server_pid, sa);
 	return (0);
@@ -64,11 +66,11 @@ void	send_message(const char *message, pid_t pid, s_sigaction sa)
 	while (strlen_str[i])
 		send_char_as_bits(strlen_str[i++], pid);
 	send_char_as_bits(strlen_str[i], pid);
-	free(strlen_str);
-	sa = initialize_sigaction(&signal_handler2);
-		while (*message)
+	while (*message)
 		send_char_as_bits(*message++, pid);
+	sa = initialize_sigaction(&signal_handler2);
 	send_char_as_bits(*message, pid);
+	free(strlen_str);
 	(void)sa;
 }
 

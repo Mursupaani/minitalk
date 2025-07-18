@@ -47,7 +47,7 @@ s_sigaction	initialize_sigaction(void)
 	s_sigaction	sa;
 
 	// sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_SIGINFO;
+	// sa.sa_flags = SA_SIGINFO;
 
 	sa.sa_sigaction = &signal_handler;
 	sigaction(SIGUSR1, &sa, NULL);
