@@ -6,3 +6,4 @@ client
 libft/
 minitalk_tester/
 .DS_Store
+project.sh
