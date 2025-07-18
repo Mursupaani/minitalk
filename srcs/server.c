@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../incl/minitalk.h"
+#include <signal.h>
 
 void			print_server_pid(void);
 s_sigaction		initialize_sigaction(void);
@@ -21,6 +22,7 @@ unsigned char	*parse_input_bits(int signal);
 void			error_exit(pid_t client);
 void			print_message_and_initialize(char **message, bool *got_length, int *i);
 
+static volatile sig_atomic_t g_sigint_received;
 
 int	main(void)
 {
@@ -28,7 +30,7 @@ int	main(void)
 
 	sa = initialize_sigaction();
 	print_server_pid();
-	while (1)
+	while (!g_sigint_received)
 		pause();
 	(void)sa;
 	return (0);
@@ -47,13 +49,16 @@ s_sigaction	initialize_sigaction(void)
 	s_sigaction	sa;
 
 	// sigemptyset(&sa.sa_mask);
-	// sa.sa_flags = SA_SIGINFO;
 
+	// WARN: How do these work?
+	sa.sa_flags = SA_SIGINFO;
+	sigaddset(&sa.sa_mask, SIGINT);
+	sigaddset(&sa.sa_mask, SIGUSR1);
+	sigaddset(&sa.sa_mask, SIGUSR2);
 	sa.sa_sigaction = &signal_handler;
 	sigaction(SIGUSR1, &sa, NULL);
 	sigaction(SIGUSR2, &sa, NULL);
-	// sigfillset(&sa.sa_mask);
-	// sigaddset(&(sa->sa_mask), SIGINT);
+	sigaction(SIGINT, &sa, NULL);
 
 	return (sa);
 }
@@ -93,27 +98,40 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 	static pid_t	current_client;
 
 	(void)context;
-	client = info->si_pid;
-	if (current_client == 0)
-		current_client = client;
-	if (client != current_client)
+	if (signal == SIGINT)
 	{
-		kill(client, SIGUSR2);
+		g_sigint_received = true;
 		return ;
 	}
-	if (!got_length)
-		msg_len = get_string_length(signal, client, &got_length);
-	else if (got_length)
+	else if (signal == SIGUSR1 || signal == SIGUSR2)
 	{
-		receive_message(signal, client, &msg_len, &got_length);
-		if (!got_length)
+		client = info->si_pid;
+		if (current_client == 0)
+			current_client = client;
+		if (client != current_client)
 		{
 			kill(client, SIGUSR2);
-			current_client = 0;
 			return ;
 		}
+		if (!got_length)
+			msg_len = get_string_length(signal, client, &got_length);
+		else if (got_length)
+		{
+			receive_message(signal, client, &msg_len, &got_length);
+			if (!got_length)
+			{
+				kill(client, SIGUSR2);
+				current_client = 0;
+				return ;
+			}
+		}
+		kill(client, SIGUSR1);
 	}
-	kill(client, SIGUSR1);
+}
+
+void	process_sigusr()
+{
+	
 }
 
 char	*get_string_length(int signal, pid_t client, bool *got_length)

@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "../incl/minitalk.h"
+#include <signal.h>
 
 s_sigaction	initialize_sigaction(void (*handler)(int, siginfo_t *, void *));
 void		send_message(const char *message, pid_t pid, s_sigaction sa);
