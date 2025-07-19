@@ -13,7 +13,8 @@
 #include "../incl/minitalk.h"
 
 static void		print_server_pid(void);
-char			*get_string_length(int signal, pid_t client, bool *got_length);
+void	process_sigusr(int signal, siginfo_t *info);
+char			*get_string_length(int signal, pid_t client, bool *got_msg_len);
 void			signal_handler(int signal, siginfo_t *info, void *context);
 unsigned char	*parse_input_bits(int signal);
 void			error_exit(pid_t client);
@@ -69,16 +70,22 @@ unsigned char	*parse_input_bits(int signal)
 
 void	signal_handler(int signal, siginfo_t *info, void *context)
 {
-	pid_t			client;
-	static char		*msg_len;
-	static bool		got_length;
-	static pid_t	current_client;
-
-	(void)context;
 	if (signal == SIGINT)
 		g_sigint_received = true;
 	else if (signal == SIGUSR1 || signal == SIGUSR2)
-	{
+		process_sigusr(signal, info);
+	(void)context;
+}
+
+
+
+void	process_sigusr(int signal, siginfo_t *info)
+{
+	pid_t			client;
+	static char		*msg_len;
+	static bool		got_msg_len;
+	static pid_t	current_client;
+
 		client = info->si_pid;
 		if (current_client == 0)
 			current_client = client;
@@ -87,12 +94,12 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 			kill(client, SIGUSR2);
 			return ;
 		}
-		if (!got_length)
-			msg_len = get_string_length(signal, client, &got_length);
-		else if (got_length)
+		if (!got_msg_len)
+			msg_len = get_string_length(signal, client, &got_msg_len);
+		else if (got_msg_len)
 		{
-			receive_msg(signal, client, &msg_len, &got_length);
-			if (!got_length)
+			receive_msg(signal, client, &msg_len, &got_msg_len);
+			if (!got_msg_len)
 			{
 				kill(client, SIGUSR2);
 				current_client = 0;
@@ -100,17 +107,9 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 			}
 		}
 		kill(client, SIGUSR1);
-	}
 }
 
-
-
-void	process_sigusr()
-{
-	
-}
-
-char	*get_string_length(int signal, pid_t client, bool *got_length)
+char	*get_string_length(int signal, pid_t client, bool *got_msg_len)
 {
 	static char		*msg_len;
 	static int		i;
@@ -128,7 +127,7 @@ char	*get_string_length(int signal, pid_t client, bool *got_length)
 	if (msg_len[i++] == '\0')
 	{
 		i = 0;
-		*got_length = true;
+		*got_msg_len = true;
 		ret_str = msg_len;
 		msg_len = NULL;
 		return (ret_str);
@@ -136,7 +135,7 @@ char	*get_string_length(int signal, pid_t client, bool *got_length)
 	return (NULL);
 }
 
-void	receive_msg(int signal, pid_t client, char **msg_len, bool *got_length)
+void	receive_msg(int signal, pid_t client, char **msg_len, bool *got_msg_len)
 {
 	static char		*msg;
 	static int		i;
@@ -157,7 +156,7 @@ void	receive_msg(int signal, pid_t client, char **msg_len, bool *got_length)
 		return ;
 	msg[i] = *c;
 	if (msg[i++] == '\0')
-		print_msg_and_init(&msg, client, got_length, &i);
+		print_msg_and_init(&msg, client, got_msg_len, &i);
 }
 
 void	error_exit(pid_t client)
@@ -166,11 +165,11 @@ void	error_exit(pid_t client)
 	exit(EXIT_FAILURE);
 }
 
-void	print_msg_and_init(char **msg, pid_t client, bool *got_length, int *i)
+void	print_msg_and_init(char **msg, pid_t client, bool *got_msg_len, int *i)
 {
 	ft_printf("%d: %s\n",client, *msg);
 	free(*msg);
 	*msg = NULL;
 	*i = 0;
-	*got_length = false;
+	*got_msg_len = false;
 }
