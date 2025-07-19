@@ -12,7 +12,6 @@
 
 #include "../incl/minitalk.h"
 
-// WARN: How do these work?
 t_sa	initialize_sigaction(void (*handler)(int, siginfo_t *, void *))
 {
 	t_sa	sa;

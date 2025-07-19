@@ -12,11 +12,11 @@
 
 #include "../incl/minitalk.h"
 
-void			process_sigusr(int signal, siginfo_t *info);
-void			signal_handler(int signal, siginfo_t *info, void *context);
-unsigned char	*parse_input_bits(int signal);
+static void	process_sigusr(int signal, siginfo_t *info);
+static void	signal_handler(int signal, siginfo_t *info, void *context);
+static char	*get_string_length(int signal, pid_t client, bool *got_msglen);
+static void	receive_msg(int signal, pid_t client, char **msglen, bool *got_msglen);
 
-// static volatile sig_atomic_t	g_sigint_received;
 static t_server_data	g_server_data;
 
 int	main(void)
@@ -33,7 +33,7 @@ int	main(void)
 	return (0);
 }
 
-void	signal_handler(int signal, siginfo_t *info, void *context)
+static void	signal_handler(int signal, siginfo_t *info, void *context)
 {
 	if (signal == SIGINT)
 		g_server_data.sigint_received = true;
@@ -97,12 +97,11 @@ void	process_sigusr(int signal, siginfo_t *info)
 	pid_t			client;
 	static char		*msglen;
 	static bool		got_msglen;
-	static pid_t	current_client;
 
 	client = info->si_pid;
-	if (current_client == 0)
-		current_client = client;
-	if (client != current_client)
+	if (g_server_data.current_client == 0)
+		g_server_data.current_client = client;
+	if (client != g_server_data.current_client)
 	{
 		kill(client, SIGUSR2);
 		return ;
@@ -115,7 +114,7 @@ void	process_sigusr(int signal, siginfo_t *info)
 		if (!got_msglen)
 		{
 			kill(client, SIGUSR2);
-			current_client = 0;
+			g_server_data.current_client = 0;
 			return ;
 		}
 	}

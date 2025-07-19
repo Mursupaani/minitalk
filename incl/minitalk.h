@@ -40,10 +40,6 @@ void			print_msg_and_init(char **msg, pid_t client,
 void			error_exit(pid_t client);
 void			print_msg_and_init(char **msg, pid_t client,
 					bool *got_msglen, int *i);
-void			receive_msg(int signal, pid_t client, char
-					**msglen, bool *got_msglen);
-char			*get_string_length(int signal, pid_t client,
-					bool *got_msglen);
 unsigned char	*parse_input_bits(int signal);
 
 #endif
