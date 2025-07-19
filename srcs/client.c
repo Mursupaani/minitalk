@@ -71,6 +71,8 @@ static void	signal_handler_start(int signal, siginfo_t *info, void *context)
 	if (signal == SIGUSR2)
 	{
 		ft_printf("Server is busy. Please try again in a moment.\n");
+		if (g_client_data.msglen)
+			free(g_client_data.msglen);
 		exit(EXIT_FAILURE);
 	}
 	if (signal == SIGINT)
@@ -90,6 +92,8 @@ static void	signal_handler_end(int signal, siginfo_t *info, void *context)
 	if (signal == SIGUSR2)
 	{
 		ft_printf("Message sent.\n");
+		if (g_client_data.msglen)
+			free(g_client_data.msglen);
 		exit(EXIT_SUCCESS);
 	}
 	if (signal == SIGINT)
