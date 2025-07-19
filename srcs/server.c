@@ -6,196 +6,117 @@
 /*   By: anpollan <anpollan@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 12:00:09 by anpollan          #+#    #+#             */
-/*   Updated: 2025/07/07 12:00:37 by anpollan         ###   ########.fr       */
+/*   Updated: 2025/07/19 16:28:26 by anpollan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incl/minitalk.h"
-#include <signal.h>
-#include <sys/types.h>
 
-void			print_server_pid(void);
-s_sa			initialize_server_sigaction(void);
-char			*get_string_length(int signal, pid_t client, bool *got_length);
-void			receive_message(int signal, pid_t client, char **msg_len, bool *got_length);
-void			signal_handler(int signal, siginfo_t *info, void *context);
-unsigned char	*parse_input_bits(int signal);
-void			error_exit(pid_t client);
-void	print_message_and_initialize(char **message, pid_t client, bool *got_length, int *i);
+static void	process_sigusr(int signal, siginfo_t *info);
+static void	signal_handler(int signal, siginfo_t *info, void *context);
+static char	*get_string_length(int signal, bool *got_msglen);
+static void	receive_msg(int signal, char **msglen, bool *got_msglen);
 
-static volatile sig_atomic_t g_sigint_received;
+static t_server_data	g_server_data;
 
 int	main(void)
 {
-	s_sa	sa;
+	t_sa	sa;
+	int		pid;
 
-	sa = initialize_server_sigaction();
-	print_server_pid();
-	while (!g_sigint_received)
+	pid = getpid();
+	ft_printf("%d\n", pid);
+	sa = initialize_sigaction(signal_handler);
+	while (!g_server_data.sigint_received)
 		pause();
 	(void)sa;
 	return (0);
 }
 
-void	print_server_pid(void)
+static void	signal_handler(int signal, siginfo_t *info, void *context)
 {
-	int	pid;
-
-	pid = getpid();
-	ft_printf("%d\n", pid);
-}
-
-s_sa	initialize_server_sigaction(void)
-{
-	s_sa	sa;
-
-	// sigemptyset(&sa.sa_mask);
-
-	// WARN: How do these work?
-	sa.sa_flags = SA_SIGINFO;
-	sigaddset(&sa.sa_mask, SIGINT);
-	sigaddset(&sa.sa_mask, SIGUSR1);
-	sigaddset(&sa.sa_mask, SIGUSR2);
-	sa.sa_sigaction = &signal_handler;
-	sigaction(SIGUSR1, &sa, NULL);
-	sigaction(SIGUSR2, &sa, NULL);
-	sigaction(SIGINT, &sa, NULL);
-
-	return (sa);
-}
-
-unsigned char	*parse_input_bits(int signal)
-{
-	static int				counter;
-	static unsigned char	c[1];
-
-	if (counter == 0)
-		*c = 0;
-	if (signal == SIGUSR1)
-	{
-		*c = *c << 1;
-		*c += 1;
-		counter++;
-	}
-	else if (signal == SIGUSR2)
-	{
-		*c = *c << 1;
-		counter++;
-	}
-	if (counter < 8)
-		return (NULL);
-	else
-	{
-		counter = 0;
-		return (c);
-	}
-}
-
-void	signal_handler(int signal, siginfo_t *info, void *context)
-{
-	pid_t			client;
-	static char		*msg_len;
-	static bool		got_length;
-	static pid_t	current_client;
-
-	(void)context;
 	if (signal == SIGINT)
-	{
-		g_sigint_received = true;
-		return ;
-	}
+		g_server_data.sigint_received = true;
 	else if (signal == SIGUSR1 || signal == SIGUSR2)
-	{
-		client = info->si_pid;
-		if (current_client == 0)
-			current_client = client;
-		if (client != current_client)
-		{
-			kill(client, SIGUSR2);
-			return ;
-		}
-		if (!got_length)
-			msg_len = get_string_length(signal, client, &got_length);
-		else if (got_length)
-		{
-			receive_message(signal, client, &msg_len, &got_length);
-			if (!got_length)
-			{
-				kill(client, SIGUSR2);
-				current_client = 0;
-				return ;
-			}
-		}
-		kill(client, SIGUSR1);
-	}
+		process_sigusr(signal, info);
+	(void)context;
 }
 
-void	process_sigusr()
+char	*get_string_length(int signal, bool *got_msglen)
 {
-	
-}
-
-char	*get_string_length(int signal, pid_t client, bool *got_length)
-{
-	static char		*msg_len;
+	static char		*msglen;
 	static int		i;
 	unsigned char	*c;
 	char			*ret_str;
 
-	if (!msg_len)
-		msg_len = (char *)ft_calloc(1, 11);
-	if (!msg_len)
-		error_exit(client);
+	if (!msglen)
+		msglen = (char *)ft_calloc(1, 11);
+	if (!msglen)
+		error_exit(g_server_data.current_client);
 	c = parse_input_bits(signal);
 	if (!c)
 		return (NULL);
-	msg_len[i] = *c;
-	if (msg_len[i++] == '\0')
+	msglen[i] = *c;
+	if (msglen[i++] == '\0')
 	{
 		i = 0;
-		*got_length = true;
-		ret_str = msg_len;
-		msg_len = NULL;
+		*got_msglen = true;
+		ret_str = msglen;
+		msglen = NULL;
 		return (ret_str);
 	}
 	return (NULL);
 }
 
-void	receive_message(int signal, pid_t client, char **msg_len, bool *got_length)
+void	receive_msg(int signal, char **msglen, bool *got_msglen)
 {
-	static char		*message;
+	static char		*msg;
 	static int		i;
-	int				msg_len_int;
+	int				msglen_int;
 	unsigned char	*c;
 
-	if (!message)
+	if (!msg)
 	{
-		msg_len_int = ft_atoi(*msg_len);
-		free(*msg_len);
-		*msg_len = NULL;
-		message = (char *)malloc(msg_len_int + 1);
-		if (!message)
-			error_exit(client);
+		msglen_int = ft_atoi(*msglen);
+		free(*msglen);
+		*msglen = NULL;
+		msg = (char *)malloc(msglen_int + 1);
+		if (!msg)
+			error_exit(g_server_data.current_client);
 	}
 	c = parse_input_bits(signal);
 	if (!c)
 		return ;
-	message[i] = *c;
-	if (message[i++] == '\0')
-		print_message_and_initialize(&message, client, got_length, &i);
+	msg[i] = *c;
+	if (msg[i++] == '\0')
+		print_msg_and_init(&msg, g_server_data.current_client, got_msglen, &i);
 }
 
-void	error_exit(pid_t client)
+void	process_sigusr(int signal, siginfo_t *info)
 {
-	kill(client, SIGUSR2);
-	exit(EXIT_FAILURE);
-}
+	pid_t			client;
+	static char		*msglen;
+	static bool		got_msglen;
 
-void	print_message_and_initialize(char **message, pid_t client, bool *got_length, int *i)
-{
-	ft_printf("%d: %s\n",client, *message);
-	free(*message);
-	*message = NULL;
-	*i = 0;
-	*got_length = false;
+	client = info->si_pid;
+	if (g_server_data.current_client == 0)
+		g_server_data.current_client = client;
+	if (client != g_server_data.current_client)
+	{
+		kill(client, SIGUSR2);
+		return ;
+	}
+	if (!got_msglen)
+		msglen = get_string_length(signal, &got_msglen);
+	else if (got_msglen)
+	{
+		receive_msg(signal, &msglen, &got_msglen);
+		if (!got_msglen)
+		{
+			kill(client, SIGUSR2);
+			g_server_data.current_client = 0;
+			return ;
+		}
+	}
+	kill(g_server_data.current_client, SIGUSR1);
 }
