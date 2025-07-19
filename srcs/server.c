@@ -14,7 +14,7 @@
 #include <signal.h>
 
 void			print_server_pid(void);
-s_sigaction		initialize_sigaction(void);
+s_sa			initialize_server_sigaction(void);
 char			*get_string_length(int signal, pid_t client, bool *got_length);
 void			receive_message(int signal, pid_t client, char **msg_len, bool *got_length);
 void			signal_handler(int signal, siginfo_t *info, void *context);
@@ -26,9 +26,9 @@ static volatile sig_atomic_t g_sigint_received;
 
 int	main(void)
 {
-	s_sigaction	sa;
+	s_sa	sa;
 
-	sa = initialize_sigaction();
+	sa = initialize_server_sigaction();
 	print_server_pid();
 	while (!g_sigint_received)
 		pause();
@@ -44,9 +44,9 @@ void	print_server_pid(void)
 	ft_printf("%d\n", pid);
 }
 
-s_sigaction	initialize_sigaction(void)
+s_sa	initialize_server_sigaction(void)
 {
-	s_sigaction	sa;
+	s_sa	sa;
 
 	// sigemptyset(&sa.sa_mask);
 

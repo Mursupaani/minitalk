@@ -11,34 +11,33 @@
 /* ************************************************************************** */
 
 #include "../incl/minitalk.h"
-#include <signal.h>
 
-s_sigaction	initialize_sigaction(void (*handler)(int, siginfo_t *, void *));
-void		send_message(const char *message, pid_t pid, s_sigaction sa);
-void		signal_handler(int signal, siginfo_t *info, void *context);
-void		signal_handler2(int signal, siginfo_t *info, void *context);
+s_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *));
+static void		send_message(const char *message, pid_t pid, s_sa sa);
+static void		signal_handler(int signal, siginfo_t *info, void *context);
+static void		signal_handler2(int signal, siginfo_t *info, void *context);
 
 static volatile sig_atomic_t g_signal_received;
 
 int	main(int argc, char *argv[])
 {
 	pid_t		server_pid;
-	s_sigaction	sa;
+	s_sa	sa;
 
 	if (argc != 3 || argv[2][0] == '\0')
 		return (EXIT_FAILURE);
 	server_pid = ft_atoi(argv[1]);
 	if (server_pid == 0)
 		return (EXIT_FAILURE);
-	sa = initialize_sigaction(&signal_handler);
+	sa = initialize_client_sigaction(&signal_handler);
 	send_message(argv[2], server_pid, sa);
 	return (0);
 }
 
 
-s_sigaction	initialize_sigaction(void (*handler)(int, siginfo_t *, void *))
+s_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *))
 {
-	s_sigaction	sa;
+	s_sa	sa;
 
 	// sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_SIGINFO;
@@ -51,7 +50,7 @@ s_sigaction	initialize_sigaction(void (*handler)(int, siginfo_t *, void *))
 	return (sa);
 }
 
-void	send_message(const char *message, pid_t pid, s_sigaction sa)
+void	send_message(const char *message, pid_t pid, s_sa sa)
 {
 	int		strlen;
 	char	*strlen_str;
@@ -69,7 +68,7 @@ void	send_message(const char *message, pid_t pid, s_sigaction sa)
 	send_char_as_bits(strlen_str[i], pid);
 	while (*message)
 		send_char_as_bits(*message++, pid);
-	sa = initialize_sigaction(&signal_handler2);
+	sa = initialize_client_sigaction(&signal_handler2);
 	send_char_as_bits(*message, pid);
 	free(strlen_str);
 	(void)sa;

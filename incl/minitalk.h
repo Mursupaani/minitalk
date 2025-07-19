@@ -17,12 +17,10 @@
 # include <signal.h>
 # include <stdbool.h>
 # include "../libft/libft.h"
-// WARN: Remove this
-# include <stdio.h>
-// WARN: Remove this
 
-typedef struct sigaction s_sigaction;
+typedef struct sigaction s_sa;
 
 void	send_char_as_bits(unsigned char c, pid_t pid);
+s_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *));
 
 #endif
