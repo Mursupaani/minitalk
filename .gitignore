@@ -3,7 +3,6 @@ client
 *.o
 *.json
 .cache/
-libft/
 minitalk_tester/
 .DS_Store
 project.sh
