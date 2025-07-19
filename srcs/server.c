@@ -12,6 +12,7 @@
 
 #include "../incl/minitalk.h"
 #include <signal.h>
+#include <sys/types.h>
 
 void			print_server_pid(void);
 s_sa			initialize_server_sigaction(void);
@@ -20,7 +21,7 @@ void			receive_message(int signal, pid_t client, char **msg_len, bool *got_lengt
 void			signal_handler(int signal, siginfo_t *info, void *context);
 unsigned char	*parse_input_bits(int signal);
 void			error_exit(pid_t client);
-void			print_message_and_initialize(char **message, bool *got_length, int *i);
+void	print_message_and_initialize(char **message, pid_t client, bool *got_length, int *i);
 
 static volatile sig_atomic_t g_sigint_received;
 
@@ -181,7 +182,7 @@ void	receive_message(int signal, pid_t client, char **msg_len, bool *got_length)
 		return ;
 	message[i] = *c;
 	if (message[i++] == '\0')
-		print_message_and_initialize(&message, got_length, &i);
+		print_message_and_initialize(&message, client, got_length, &i);
 }
 
 void	error_exit(pid_t client)
@@ -190,9 +191,9 @@ void	error_exit(pid_t client)
 	exit(EXIT_FAILURE);
 }
 
-void	print_message_and_initialize(char **message, bool *got_length, int *i)
+void	print_message_and_initialize(char **message, pid_t client, bool *got_length, int *i)
 {
-	ft_printf("%s\n", *message);
+	ft_printf("%d: %s\n",client, *message);
 	free(*message);
 	*message = NULL;
 	*i = 0;
