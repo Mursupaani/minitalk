@@ -15,7 +15,7 @@ CLIENT		= client
 LIBFT		= ./libft/libft.a
 SRCS_DIR	= ./srcs/
 INCL_DIR	= ./incl/
-SERVER_SRCS	= ./srcs/server.c
+SERVER_SRCS	= ./srcs/server.c ./srcs/parsing.c
 CLIENT_SRCS = ./srcs/client.c
 SHARED_SRCS = ./srcs/minitalk_utils.c
 SERVER_OBJS	= $(SERVER_SRCS:%.c=%.o)
