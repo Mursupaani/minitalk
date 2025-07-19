@@ -21,19 +21,25 @@
 
 typedef struct sigaction	t_sa;
 
+typedef struct	s_server_data
+{
+	pid_t					current_client;
+	volatile sig_atomic_t	sigint_received;
+}	t_server_data;
+
 typedef struct s_client_data
 {
 	char					*msglen;
 	volatile sig_atomic_t	signal_received;
 }	t_client_data;
 
-t_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *));
-t_sa	initialize_server_sigaction(void (*handler)(int, siginfo_t *, void *));
+t_sa	initialize_sigaction(void (*handler)(int, siginfo_t *, void *));
 int		*ft_atoi_safe(const char *nptr);
 void	print_msg_and_init(char **msg, pid_t client, bool *got_length, int *i);
 void	error_exit(pid_t client);
 void	print_msg_and_init(char **msg, pid_t client, bool *got_msglen, int *i);
 void	receive_msg(int signal, pid_t client, char **msglen, bool *got_msglen);
 char	*get_string_length(int signal, pid_t client, bool *got_msglen);
+void	receive_msg(int signal, pid_t client, char **msglen, bool *got_msglen);
 
 #endif

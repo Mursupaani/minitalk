@@ -13,7 +13,6 @@
 #include "../incl/minitalk.h"
 
 void			process_sigusr(int signal, siginfo_t *info);
-char			*get_string_length(int signal, pid_t client, bool *got_msglen);
 void			signal_handler(int signal, siginfo_t *info, void *context);
 unsigned char	*parse_input_bits(int signal);
 
@@ -22,11 +21,11 @@ static volatile sig_atomic_t	g_sigint_received;
 int	main(void)
 {
 	t_sa	sa;
-	int	pid;
+	int		pid;
 
 	pid = getpid();
 	ft_printf("%d\n", pid);
-	sa = initialize_server_sigaction(signal_handler);
+	sa = initialize_sigaction(signal_handler);
 	while (!g_sigint_received)
 		pause();
 	(void)sa;
@@ -118,4 +117,3 @@ void	receive_msg(int signal, pid_t client, char **msglen, bool *got_msglen)
 	if (msg[i++] == '\0')
 		print_msg_and_init(&msg, client, got_msglen, &i);
 }
-

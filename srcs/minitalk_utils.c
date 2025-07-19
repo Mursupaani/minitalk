@@ -13,20 +13,7 @@
 #include "../incl/minitalk.h"
 
 // WARN: How do these work?
-t_sa	initialize_server_sigaction(void (*handler)(int, siginfo_t *, void *))
-{
-	t_sa	sa;
-
-	sa.sa_flags = SA_SIGINFO;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_sigaction = handler;
-	sigaction(SIGUSR1, &sa, NULL);
-	sigaction(SIGUSR2, &sa, NULL);
-	sigaction(SIGINT, &sa, NULL);
-	return (sa);
-}
-
-t_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *))
+t_sa	initialize_sigaction(void (*handler)(int, siginfo_t *, void *))
 {
 	t_sa	sa;
 
@@ -74,11 +61,33 @@ void	error_exit(pid_t client)
 	exit(EXIT_FAILURE);
 }
 
-void	print_msg_and_init(char **msg, pid_t client, bool *got_msg_len, int *i)
+
+void	process_sigusr(int signal, siginfo_t *info)
 {
-	ft_printf("%d: %s\n", client, *msg);
-	free(*msg);
-	*msg = NULL;
-	*i = 0;
-	*got_msg_len = false;
+	pid_t			client;
+	static char		*msglen;
+	static bool		got_msglen;
+	static pid_t	current_client;
+
+	client = info->si_pid;
+	if (current_client == 0)
+		current_client = client;
+	if (client != current_client)
+	{
+		kill(client, SIGUSR2);
+		return ;
+	}
+	if (!got_msglen)
+		msglen = get_string_length(signal, client, &got_msglen);
+	else if (got_msglen)
+	{
+		receive_msg(signal, client, &msglen, &got_msglen);
+		if (!got_msglen)
+		{
+			kill(client, SIGUSR2);
+			current_client = 0;
+			return ;
+		}
+	}
+	kill(client, SIGUSR1);
 }

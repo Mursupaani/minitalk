@@ -33,7 +33,7 @@ int	main(int argc, char *argv[])
 	server_pid = *temp_server_pid;
 	if (server_pid < 0)
 		return (EXIT_FAILURE);
-	sa = initialize_client_sigaction(&signal_handler_start);
+	sa = initialize_sigaction(&signal_handler_start);
 	send_message(argv[2], server_pid, sa);
 	return (0);
 }
@@ -57,7 +57,7 @@ static void	send_message(const char *message, pid_t pid, t_sa sa)
 	g_client_data.msglen = NULL;
 	while (*message)
 		send_char_as_bits(*message++, pid);
-	sa = initialize_client_sigaction(&signal_handler_end);
+	sa = initialize_sigaction(&signal_handler_end);
 	send_char_as_bits(*message, pid);
 	(void)sa;
 }
@@ -123,4 +123,3 @@ static void	send_char_as_bits(unsigned char c, int pid)
 		c = c << 1;
 	}
 }
-
