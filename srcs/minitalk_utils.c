@@ -12,3 +12,15 @@
 
 #include "../incl/minitalk.h"
 
+s_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *))
+{
+	s_sa	sa;
+
+	sa.sa_flags = SA_SIGINFO;
+
+	sigemptyset(&sa.sa_mask);
+	sa.sa_sigaction = handler;
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
+	return (sa);
+}

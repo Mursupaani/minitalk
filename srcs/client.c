@@ -12,7 +12,6 @@
 
 #include "../incl/minitalk.h"
 
-s_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *));
 static void		send_message(const char *message, pid_t pid, s_sa sa);
 static void		signal_handler(int signal, siginfo_t *info, void *context);
 static void		signal_handler2(int signal, siginfo_t *info, void *context);
@@ -32,22 +31,6 @@ int	main(int argc, char *argv[])
 	sa = initialize_client_sigaction(&signal_handler);
 	send_message(argv[2], server_pid, sa);
 	return (0);
-}
-
-
-s_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *))
-{
-	s_sa	sa;
-
-	// sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_SIGINFO;
-	// sa.sa_flags = SA_RESTART;
-
-	sa.sa_sigaction = handler;
-	sigaction(SIGUSR1, &sa, NULL);
-	sigaction(SIGUSR2, &sa, NULL);
-	// sigaddset(&(sa->sa_mask), SIGINT);
-	return (sa);
 }
 
 void	send_message(const char *message, pid_t pid, s_sa sa)
