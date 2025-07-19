@@ -12,28 +12,29 @@
 
 #include "../incl/minitalk.h"
 
-static void		send_message(const char *message, pid_t pid, s_sa sa);
-static void		signal_handler(int signal, siginfo_t *info, void *context);
-static void		signal_handler2(int signal, siginfo_t *info, void *context);
+static void	send_message(const char *message, pid_t pid, s_sa sa);
+static void	signal_handler_start(int signal, siginfo_t *info, void *context);
+static void	signal_handler_end(int signal, siginfo_t *info, void *context);
+static void	send_char_as_bits(unsigned char c, int pid);
 
 static volatile sig_atomic_t g_signal_received;
 
 int	main(int argc, char *argv[])
 {
-	pid_t		server_pid;
+	pid_t	server_pid;
 	s_sa	sa;
 
 	if (argc != 3 || argv[2][0] == '\0')
 		return (EXIT_FAILURE);
 	server_pid = ft_atoi(argv[1]);
-	if (server_pid == 0)
+	if (server_pid < 0)
 		return (EXIT_FAILURE);
-	sa = initialize_client_sigaction(&signal_handler);
+	sa = initialize_client_sigaction(&signal_handler_start);
 	send_message(argv[2], server_pid, sa);
 	return (0);
 }
 
-void	send_message(const char *message, pid_t pid, s_sa sa)
+static void	send_message(const char *message, pid_t pid, s_sa sa)
 {
 	int		strlen;
 	char	*strlen_str;
@@ -49,15 +50,15 @@ void	send_message(const char *message, pid_t pid, s_sa sa)
 	while (strlen_str[i])
 		send_char_as_bits(strlen_str[i++], pid);
 	send_char_as_bits(strlen_str[i], pid);
+	free(strlen_str);
 	while (*message)
 		send_char_as_bits(*message++, pid);
-	sa = initialize_client_sigaction(&signal_handler2);
+	sa = initialize_client_sigaction(&signal_handler_end);
 	send_char_as_bits(*message, pid);
-	free(strlen_str);
 	(void)sa;
 }
 
-void	signal_handler(int signal, siginfo_t *info, void *context)
+static void	signal_handler_start(int signal, siginfo_t *info, void *context)
 {
 	(void)context;
 	(void)info;
@@ -68,9 +69,11 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 		ft_printf("Server is busy. Please try again in a moment.\n");
 		exit(EXIT_FAILURE);
 	}
+	if (signal == SIGINT)
+		exit(EXIT_SUCCESS);
 }
 
-void	signal_handler2(int signal, siginfo_t *info, void *context)
+static void	signal_handler_end(int signal, siginfo_t *info, void *context)
 {
 	(void)context;
 	(void)info;
@@ -81,9 +84,11 @@ void	signal_handler2(int signal, siginfo_t *info, void *context)
 		ft_printf("Message sent.\n");
 		exit(EXIT_SUCCESS);
 	}
+	if (signal == SIGINT)
+		exit(EXIT_SUCCESS);
 }
 
-void	send_char_as_bits(unsigned char c, int pid)
+static void	send_char_as_bits(unsigned char c, int pid)
 {
 	unsigned char	current_bit;
 	int				i;

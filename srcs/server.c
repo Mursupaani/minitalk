@@ -11,17 +11,14 @@
 /* ************************************************************************** */
 
 #include "../incl/minitalk.h"
-#include <signal.h>
-#include <sys/types.h>
 
-void			print_server_pid(void);
-s_sa			initialize_server_sigaction(void);
+static void		print_server_pid(void);
 char			*get_string_length(int signal, pid_t client, bool *got_length);
-void			receive_message(int signal, pid_t client, char **msg_len, bool *got_length);
+void			receive_msg(int signal, pid_t client, char **msg_len, bool *got_length);
 void			signal_handler(int signal, siginfo_t *info, void *context);
 unsigned char	*parse_input_bits(int signal);
 void			error_exit(pid_t client);
-void	print_message_and_initialize(char **message, pid_t client, bool *got_length, int *i);
+void	print_msg_and_init(char **msg, pid_t client, bool *got_length, int *i);
 
 static volatile sig_atomic_t g_sigint_received;
 
@@ -29,7 +26,7 @@ int	main(void)
 {
 	s_sa	sa;
 
-	sa = initialize_server_sigaction();
+	sa = initialize_server_sigaction(signal_handler);
 	print_server_pid();
 	while (!g_sigint_received)
 		pause();
@@ -45,24 +42,6 @@ void	print_server_pid(void)
 	ft_printf("%d\n", pid);
 }
 
-s_sa	initialize_server_sigaction(void)
-{
-	s_sa	sa;
-
-	// sigemptyset(&sa.sa_mask);
-
-	// WARN: How do these work?
-	sa.sa_flags = SA_SIGINFO;
-	sigaddset(&sa.sa_mask, SIGINT);
-	sigaddset(&sa.sa_mask, SIGUSR1);
-	sigaddset(&sa.sa_mask, SIGUSR2);
-	sa.sa_sigaction = &signal_handler;
-	sigaction(SIGUSR1, &sa, NULL);
-	sigaction(SIGUSR2, &sa, NULL);
-	sigaction(SIGINT, &sa, NULL);
-
-	return (sa);
-}
 
 unsigned char	*parse_input_bits(int signal)
 {
@@ -118,7 +97,7 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 			msg_len = get_string_length(signal, client, &got_length);
 		else if (got_length)
 		{
-			receive_message(signal, client, &msg_len, &got_length);
+			receive_msg(signal, client, &msg_len, &got_length);
 			if (!got_length)
 			{
 				kill(client, SIGUSR2);
@@ -161,28 +140,28 @@ char	*get_string_length(int signal, pid_t client, bool *got_length)
 	return (NULL);
 }
 
-void	receive_message(int signal, pid_t client, char **msg_len, bool *got_length)
+void	receive_msg(int signal, pid_t client, char **msg_len, bool *got_length)
 {
-	static char		*message;
+	static char		*msg;
 	static int		i;
 	int				msg_len_int;
 	unsigned char	*c;
 
-	if (!message)
+	if (!msg)
 	{
 		msg_len_int = ft_atoi(*msg_len);
 		free(*msg_len);
 		*msg_len = NULL;
-		message = (char *)malloc(msg_len_int + 1);
-		if (!message)
+		msg = (char *)malloc(msg_len_int + 1);
+		if (!msg)
 			error_exit(client);
 	}
 	c = parse_input_bits(signal);
 	if (!c)
 		return ;
-	message[i] = *c;
-	if (message[i++] == '\0')
-		print_message_and_initialize(&message, client, got_length, &i);
+	msg[i] = *c;
+	if (msg[i++] == '\0')
+		print_msg_and_init(&msg, client, got_length, &i);
 }
 
 void	error_exit(pid_t client)
@@ -191,11 +170,11 @@ void	error_exit(pid_t client)
 	exit(EXIT_FAILURE);
 }
 
-void	print_message_and_initialize(char **message, pid_t client, bool *got_length, int *i)
+void	print_msg_and_init(char **msg, pid_t client, bool *got_length, int *i)
 {
-	ft_printf("%d: %s\n",client, *message);
-	free(*message);
-	*message = NULL;
+	ft_printf("%d: %s\n",client, *msg);
+	free(*msg);
+	*msg = NULL;
 	*i = 0;
 	*got_length = false;
 }

@@ -20,7 +20,7 @@
 
 typedef struct sigaction s_sa;
 
-void	send_char_as_bits(unsigned char c, pid_t pid);
 s_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *));
+s_sa	initialize_server_sigaction(void (*handler)(int, siginfo_t *, void *));
 
 #endif
