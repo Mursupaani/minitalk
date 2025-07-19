@@ -12,19 +12,17 @@
 
 #include "../incl/minitalk.h"
 
+// WARN: How do these work?
 t_sa	initialize_server_sigaction(void (*handler)(int, siginfo_t *, void *))
 {
 	t_sa	sa;
 
-
-	// WARN: How do these work?
 	sa.sa_flags = SA_SIGINFO;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_sigaction = handler;
 	sigaction(SIGUSR1, &sa, NULL);
 	sigaction(SIGUSR2, &sa, NULL);
 	sigaction(SIGINT, &sa, NULL);
-
 	return (sa);
 }
 
@@ -33,7 +31,6 @@ t_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *))
 	t_sa	sa;
 
 	sa.sa_flags = SA_SIGINFO;
-
 	sigemptyset(&sa.sa_mask);
 	sa.sa_sigaction = handler;
 	sigaction(SIGUSR1, &sa, NULL);

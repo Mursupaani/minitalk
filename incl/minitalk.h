@@ -30,5 +30,7 @@ typedef struct s_client_data
 t_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *));
 t_sa	initialize_server_sigaction(void (*handler)(int, siginfo_t *, void *));
 int		*ft_atoi_safe(const char *nptr);
+void	receive_msg(int signal, pid_t client, char **msg_len, bool *got_length);
+void	print_msg_and_init(char **msg, pid_t client, bool *got_length, int *i);
 
 #endif

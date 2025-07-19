@@ -14,13 +14,11 @@
 
 static void		print_server_pid(void);
 char			*get_string_length(int signal, pid_t client, bool *got_length);
-void			receive_msg(int signal, pid_t client, char **msg_len, bool *got_length);
 void			signal_handler(int signal, siginfo_t *info, void *context);
 unsigned char	*parse_input_bits(int signal);
 void			error_exit(pid_t client);
-void			print_msg_and_init(char **msg, pid_t client, bool *got_length, int *i);
 
-static volatile sig_atomic_t g_sigint_received;
+static volatile sig_atomic_t	g_sigint_received;
 
 int	main(void)
 {
@@ -41,7 +39,6 @@ void	print_server_pid(void)
 	pid = getpid();
 	ft_printf("%d\n", pid);
 }
-
 
 unsigned char	*parse_input_bits(int signal)
 {
@@ -79,10 +76,7 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 
 	(void)context;
 	if (signal == SIGINT)
-	{
 		g_sigint_received = true;
-		return ;
-	}
 	else if (signal == SIGUSR1 || signal == SIGUSR2)
 	{
 		client = info->si_pid;
@@ -108,6 +102,8 @@ void	signal_handler(int signal, siginfo_t *info, void *context)
 		kill(client, SIGUSR1);
 	}
 }
+
+
 
 void	process_sigusr()
 {
