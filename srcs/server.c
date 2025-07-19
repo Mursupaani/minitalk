@@ -18,13 +18,13 @@ void			receive_msg(int signal, pid_t client, char **msg_len, bool *got_length);
 void			signal_handler(int signal, siginfo_t *info, void *context);
 unsigned char	*parse_input_bits(int signal);
 void			error_exit(pid_t client);
-void	print_msg_and_init(char **msg, pid_t client, bool *got_length, int *i);
+void			print_msg_and_init(char **msg, pid_t client, bool *got_length, int *i);
 
 static volatile sig_atomic_t g_sigint_received;
 
 int	main(void)
 {
-	s_sa	sa;
+	t_sa	sa;
 
 	sa = initialize_server_sigaction(signal_handler);
 	print_server_pid();

@@ -16,11 +16,19 @@
 # include <unistd.h>
 # include <signal.h>
 # include <stdbool.h>
+# include <limits.h>
 # include "../libft/libft.h"
 
-typedef struct sigaction s_sa;
+typedef struct sigaction	t_sa;
 
-s_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *));
-s_sa	initialize_server_sigaction(void (*handler)(int, siginfo_t *, void *));
+typedef struct s_client_data
+{
+	char					*msg_len;
+	volatile sig_atomic_t	signal_received;
+}	t_client_data;
+
+t_sa	initialize_client_sigaction(void (*handler)(int, siginfo_t *, void *));
+t_sa	initialize_server_sigaction(void (*handler)(int, siginfo_t *, void *));
+int		*ft_atoi_safe(const char *nptr);
 
 #endif
