@@ -67,3 +67,18 @@ int	*ft_atoi_safe(const char *nptr)
 		return (NULL);
 	return ((int *)result);
 }
+
+void	error_exit(pid_t client)
+{
+	kill(client, SIGUSR2);
+	exit(EXIT_FAILURE);
+}
+
+void	print_msg_and_init(char **msg, pid_t client, bool *got_msg_len, int *i)
+{
+	ft_printf("%d: %s\n", client, *msg);
+	free(*msg);
+	*msg = NULL;
+	*i = 0;
+	*got_msg_len = false;
+}

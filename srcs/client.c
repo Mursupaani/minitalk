@@ -6,7 +6,7 @@
 /*   By: anpollan <anpollan@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/07 12:32:21 by anpollan          #+#    #+#             */
-/*   Updated: 2025/07/09 18:58:06 by anpollan         ###   ########.fr       */
+/*   Updated: 2025/07/19 15:48:04 by anpollan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,15 +46,15 @@ static void	send_message(const char *message, pid_t pid, t_sa sa)
 	strlen = ft_strlen(message);
 	if (strlen == 0)
 		exit(EXIT_FAILURE);
-	g_client_data.msg_len = ft_itoa(strlen);
-	if (!g_client_data.msg_len)
+	g_client_data.msglen = ft_itoa(strlen);
+	if (!g_client_data.msglen)
 		exit(EXIT_FAILURE);
 	i = 0;
-	while (g_client_data.msg_len[i])
-		send_char_as_bits(g_client_data.msg_len[i++], pid);
-	send_char_as_bits(g_client_data.msg_len[i], pid);
-	free(g_client_data.msg_len);
-	g_client_data.msg_len = NULL;
+	while (g_client_data.msglen[i])
+		send_char_as_bits(g_client_data.msglen[i++], pid);
+	send_char_as_bits(g_client_data.msglen[i], pid);
+	free(g_client_data.msglen);
+	g_client_data.msglen = NULL;
 	while (*message)
 		send_char_as_bits(*message++, pid);
 	sa = initialize_client_sigaction(&signal_handler_end);
@@ -75,8 +75,8 @@ static void	signal_handler_start(int signal, siginfo_t *info, void *context)
 	}
 	if (signal == SIGINT)
 	{
-		if (g_client_data.msg_len)
-			free(g_client_data.msg_len);
+		if (g_client_data.msglen)
+			free(g_client_data.msglen);
 		exit(EXIT_SUCCESS);
 	}
 }
@@ -94,8 +94,8 @@ static void	signal_handler_end(int signal, siginfo_t *info, void *context)
 	}
 	if (signal == SIGINT)
 	{
-		if (g_client_data.msg_len)
-			free(g_client_data.msg_len);
+		if (g_client_data.msglen)
+			free(g_client_data.msglen);
 		exit(EXIT_SUCCESS);
 	}
 }
