@@ -15,7 +15,7 @@
 static void	process_sigusr(int signal, siginfo_t *info);
 static void	signal_handler(int signal, siginfo_t *info, void *context);
 static char	*get_string_length(int signal, pid_t client, bool *got_msglen);
-static void	receive_msg(int signal, pid_t client, char **msglen, bool *got_msglen);
+static void	receive_msg(int signal, char **msglen, bool *got_msglen);
 
 static t_server_data	g_server_data;
 
@@ -68,7 +68,7 @@ char	*get_string_length(int signal, pid_t client, bool *got_msglen)
 	return (NULL);
 }
 
-void	receive_msg(int signal, pid_t client, char **msglen, bool *got_msglen)
+void	receive_msg(int signal, char **msglen, bool *got_msglen)
 {
 	static char		*msg;
 	static int		i;
@@ -82,14 +82,14 @@ void	receive_msg(int signal, pid_t client, char **msglen, bool *got_msglen)
 		*msglen = NULL;
 		msg = (char *)malloc(msglen_int + 1);
 		if (!msg)
-			error_exit(client);
+			error_exit(g_server_data.current_client);
 	}
 	c = parse_input_bits(signal);
 	if (!c)
 		return ;
 	msg[i] = *c;
 	if (msg[i++] == '\0')
-		print_msg_and_init(&msg, client, got_msglen, &i);
+		print_msg_and_init(&msg, g_server_data.current_client, got_msglen, &i);
 }
 
 void	process_sigusr(int signal, siginfo_t *info)
@@ -110,7 +110,7 @@ void	process_sigusr(int signal, siginfo_t *info)
 		msglen = get_string_length(signal, client, &got_msglen);
 	else if (got_msglen)
 	{
-		receive_msg(signal, client, &msglen, &got_msglen);
+		receive_msg(signal, &msglen, &got_msglen);
 		if (!got_msglen)
 		{
 			kill(client, SIGUSR2);

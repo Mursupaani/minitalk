@@ -35,11 +35,9 @@ typedef struct s_client_data
 
 t_sa			initialize_sigaction(void (*handler)(int, siginfo_t *, void *));
 int				*ft_atoi_safe(const char *nptr);
-void			print_msg_and_init(char **msg, pid_t client,
-					bool *got_length, int *i);
+void			print_msg_and_init(
+					char **msg, pid_t client, bool *got_length, int *i);
 void			error_exit(pid_t client);
-void			print_msg_and_init(char **msg, pid_t client,
-					bool *got_msglen, int *i);
 unsigned char	*parse_input_bits(int signal);
 
 #endif

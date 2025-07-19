@@ -68,3 +68,30 @@ void	print_msg_and_init(char **msg, pid_t client, bool *got_msglen, int *i)
 	*i = 0;
 	*got_msglen = false;
 }
+
+unsigned char	*parse_input_bits(int signal)
+{
+	static int				counter;
+	static unsigned char	c[1];
+
+	if (counter == 0)
+		*c = 0;
+	if (signal == SIGUSR1)
+	{
+		*c = *c << 1;
+		*c += 1;
+		counter++;
+	}
+	else if (signal == SIGUSR2)
+	{
+		*c = *c << 1;
+		counter++;
+	}
+	if (counter < 8)
+		return (NULL);
+	else
+	{
+		counter = 0;
+		return (c);
+	}
+}
