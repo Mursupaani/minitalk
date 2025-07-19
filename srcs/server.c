@@ -25,7 +25,7 @@ int	main(void)
 	int		pid;
 
 	pid = getpid();
-	ft_printf("%d\n", pid);
+	ft_printf("Server pid: %d\n\n", pid);
 	sa = initialize_sigaction(signal_handler);
 	while (!g_server_data.sigint_received)
 		pause();
